@@ -1,0 +1,129 @@
+#THIS IS DEFCONABSOLUTION NOTHING HIDES FROM US IN THE NAME OF CYBERSECURITY  
+#EOL LUMMASTEALER  
+
+# ============================================
+# PHASE 0: HOSTFILE NULLIFICATION
+# ============================================
+$hostPath = "$env:SystemRoot\System32\drivers\etc\hosts"
+$blockDomains = @(
+  "telemetry.microsoft.com",
+  "vortex.data.microsoft.com",
+  "settings-win.data.microsoft.com",
+  "oca.telemetry.microsoft.com",
+  "telecommand.telemetry.microsoft.com",
+  "watson.telemetry.microsoft.com",
+  "telemetry.remoteapp.windowsazure.com",
+  "vortex-win.data.microsoft.com",
+  "experiments.microsoftazuread-sso.com",
+  "teams.microsoft.com",
+  "msteams.azureedge.net",
+  "client.wns.windows.com",
+  "g.live.com",
+  "wns.windows.com",
+  "msedge.net",
+  "edge.microsoft.com",
+  "az416426.vo.msecnd.net",
+  "mobile.pipe.aria.microsoft.com"
+)
+
+foreach ($domain in $blockDomains) {
+  $entry = "0.0.0.0 $domain"
+  if (-not (Select-String -Path $hostPath -Pattern [regex]::Escape($domain))) {
+    Add-Content -Path $hostPath -Value $entry
+  }
+}
+
+# ============================================
+# PHASE 1-5: EVERYTHING ELSE FROM BEFORE
+# ============================================
+
+# ipv4 killlist
+$l_ips = @(
+  '45.9.148.221','193.233.20.21','185.215.113.40','91.219.236.15',
+  '162.55.235.42','5.61.56.11','91.219.237.244','94.158.244.13',
+  '3.233.158.24','52.123.129.14',
+  '192.0.2.10','192.0.2.11','192.0.2.12','192.0.2.54',
+  '203.0.113.5','203.0.113.6','203.0.113.7','203.0.113.54',
+  '198.51.100.22','198.51.100.23','198.51.100.24','198.51.100.25',
+  '198.51.100.26','198.51.100.27','198.51.100.28','198.51.100.29',
+  '198.51.100.30','198.51.100.31','198.51.100.32','198.51.100.33',
+  '198.51.100.34','198.51.100.35','198.51.100.36','198.51.100.37',
+  '198.51.100.38','198.51.100.39','198.51.100.40','198.51.100.41',
+  '198.51.100.42','198.51.100.43','198.51.100.44','198.51.100.45',
+  '198.51.100.54',
+  #lummastealer v4 2025-12-29
+  '20.42.65.59','52.114.207.64','119.232.37.91','199.232.37.91','188.172.221.9'
+)
+
+$l_ipv6 = @(
+  '2a0b:4d07:2::221','2a0b:4d07:20::21','2a0b:4d07:113::40','2a0b:4d07:236::15',
+  '2a01:4f8:c2::235:42','2a0b:4d07:56::11','2a0b:4d07:237::244','2a0b:4d07:158::13'
+)
+
+$domains = @(
+  "*.teams.microsoft.com","*.telemetry.microsoft.com","*.azureedge.net",
+  "*.msedge.net","*.windows.net"
+)
+
+foreach ($ip in $l_ips) {
+  New-NetFirewallRule -DisplayName "SCREWLUMMACRYERV4-$ip" `
+                      -Direction Outbound `
+                      -Action Block `
+                      -RemoteAddress $ip `
+                      -Profile Any `
+                      -Protocol Any
+}
+
+foreach ($ip in $l_ipv6) {
+  New-NetFirewallRule -DisplayName "SCREWLUMMACRYERV4v6-$ip" `
+                      -Direction Outbound `
+                      -Action Block `
+                      -RemoteAddress $ip `
+                      -Profile Any `
+                      -Protocol Any
+}
+
+foreach ($domain in $domains) {
+  New-NetFirewallRule -DisplayName "DEFCON-DOMAIN-BLOCK-$domain" `
+                      -Direction Outbound `
+                      -Action Block `
+                      -RemoteFQDN $domain `
+                      -Profile Any `
+                      -Protocol Any
+}
+
+# kill telemetry services
+$svcList = @(
+  "DiagTrack","dmwappushservice","WerSvc","PcaSvc","WbioSrvc",
+  "MicrosoftEdgeUpdate","MapsBroker","RetailDemo","OneSyncSvc",
+  "BthAvctpSvc","Fax","lfsvc","AppVClient","MessagingService"
+)
+
+foreach ($svc in $svcList) {
+  Stop-Service -Name $svc -Force
+  Set-Service -Name $svc -StartupType Disabled
+}
+
+# nuke loopbacks + known exfil ports
+New-NetFirewallRule -DisplayName "DEFCON-LOOPBACK-KILL" `
+                    -Direction Outbound `
+                    -Action Block `
+                    -RemoteAddress "127.0.0.1","::1" `
+                    -Protocol TCP `
+                    -Profile Any
+
+New-NetFirewallRule -DisplayName "DEFCON-EXFIL-PORTS" `
+                    -Direction Outbound `
+                    -Action Block `
+                    -Protocol TCP `
+                    -LocalPort 4444,5555,6666,8080,1337 `
+                    -Profile Any
+
+# null route survivors
+$nullRoutes = @("52.114.207.64","199.232.37.91","20.42.65.59")
+foreach ($ip in $nullRoutes) {
+  route add $ip mask 255.255.255.255 0.0.0.0 -p
+}
+
+# finale
+Write-Host "🛑  end of lummastealer — HOSTFILE + FIREWALL + TELEMETRY + LOOPBACKS TERMINATED" -ForegroundColor Red
