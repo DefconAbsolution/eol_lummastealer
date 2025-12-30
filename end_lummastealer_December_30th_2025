@@ -1,21 +1,23 @@
-# THIS IS DEFCONABSOLUTION NOTHING HIDES FROM US IN THE NAME OF CYBERSECURITY  
-# EOL LUMMASTEALER
+# THIS IS DEFCONABSOLUTION — NOTHING HIDES FROM US IN THE NAME OF CYBERSECURITY  
+# EOL LUMMASTEALER  
 
+# =====================[ PHASE 0 — HOSTFILE NULLIFICATION ]=====================
 $hostPath = "$env:SystemRoot\System32\drivers\etc\hosts"
 $blockDomains = @(
-  "telemetry.microsoft.com","vortex.data.microsoft.com","settings-win.data.microsoft.com",
-  "oca.telemetry.microsoft.com","telecommand.telemetry.microsoft.com","watson.telemetry.microsoft.com",
-  "telemetry.remoteapp.windowsazure.com","vortex-win.data.microsoft.com","experiments.microsoftazuread-sso.com",
-  "teams.microsoft.com","msteams.azureedge.net","client.wns.windows.com","g.live.com",
-  "wns.windows.com","msedge.net","edge.microsoft.com","az416426.vo.msecnd.net","mobile.pipe.aria.microsoft.com"
+  "telemetry.microsoft.com", "vortex.data.microsoft.com", "settings-win.data.microsoft.com",
+  "oca.telemetry.microsoft.com", "telecommand.telemetry.microsoft.com", "watson.telemetry.microsoft.com",
+  "telemetry.remoteapp.windowsazure.com", "vortex-win.data.microsoft.com", "experiments.microsoftazuread-sso.com",
+  "teams.microsoft.com", "msteams.azureedge.net", "client.wns.windows.com", "g.live.com",
+  "wns.windows.com", "msedge.net", "edge.microsoft.com", "az416426.vo.msecnd.net",
+  "mobile.pipe.aria.microsoft.com"
 )
 
 Write-Host "[PHASE 0] HOSTFILE NULLIFICATION COMMENCED..." -ForegroundColor Red
-$hostLines = Get-Content -Path $hostPath
+$hostLines = Get-Content -Path $hostPath -ErrorAction Stop
 foreach ($d in $blockDomains) {
-  $pattern = "^0\.0\.0\.0\s+$([regex]::Escape($d))$"
-  $alreadyExists = $hostLines | Where-Object { $_ -match $pattern }
-  if (-not $alreadyExists) {
+  $escaped = [regex]::Escape($d)
+  $pattern = "^0\.0\.0\.0\s+$escaped$"
+  if (-not ($hostLines | Where-Object { $_ -match $pattern })) {
     Add-Content -Path $hostPath -Value "0.0.0.0 $d"
     Write-Host "→ BLOCKED: $d" -ForegroundColor Red
   } else {
@@ -23,12 +25,12 @@ foreach ($d in $blockDomains) {
   }
 }
 
+# =====================[ PHASE 1 — IP BLOCKCHAIN EXFIL CUT ]====================
 Write-Host "[PHASE 1] IPV4 & IPV6 EXFIL BLOCKCHAIN INITIATED..." -ForegroundColor Red
 $l_ips = @(
   '45.9.148.221','193.233.20.21','185.215.113.40','91.219.236.15','162.55.235.42','5.61.56.11',
-  '91.219.237.244','94.158.244.13','3.233.158.24','52.123.129.14',
-  '192.0.2.10','192.0.2.11','192.0.2.12','192.0.2.54',
-  '203.0.113.5','203.0.113.6','203.0.113.7','203.0.113.54',
+  '91.219.237.244','94.158.244.13','3.233.158.24','52.123.129.14','192.0.2.10','192.0.2.11',
+  '192.0.2.12','192.0.2.54','203.0.113.5','203.0.113.6','203.0.113.7','203.0.113.54',
   '198.51.100.22','198.51.100.23','198.51.100.24','198.51.100.25','198.51.100.26','198.51.100.27',
   '198.51.100.28','198.51.100.29','198.51.100.30','198.51.100.31','198.51.100.32','198.51.100.33',
   '198.51.100.34','198.51.100.35','198.51.100.36','198.51.100.37','198.51.100.38','198.51.100.39',
@@ -45,36 +47,51 @@ foreach ($ip in $l_ips) {
   Write-Host "→ BLOCKED IPV4: $ip" -ForegroundColor Red
 }
 foreach ($ip in $l_ipv6) {
-  New-NetFirewallRule -DisplayName "SCREWLUMMACRYERV4v6-$ip" -Direction Outbound -Action Block -RemoteAddress $ip -Profile Any -Protocol Any
+  New-NetFirewallRule -DisplayName "SCREWLUMMACRYERV6-$ip" -Direction Outbound -Action Block -RemoteAddress $ip -Profile Any -Protocol Any
   Write-Host "→ BLOCKED IPV6: $ip" -ForegroundColor Red
 }
 
+# =====================[ PHASE 2 — DOMAIN RESOLVE + BLOCK ]====================
 Write-Host "[PHASE 2] DOMAIN TO IP RESOLUTION + FIREWALL BLOCKING..." -ForegroundColor Red
 $domains = @("teams.microsoft.com","telemetry.microsoft.com","azureedge.net","msedge.net","windows.net")
 foreach ($d in $domains) {
-  Write-Host "→ RESOLVING: $d" -ForegroundColor Red
-  $ips = (Resolve-DnsName $d).IPAddress
-  foreach ($ip in $ips) {
-    New-NetFirewallRule -DisplayName "DEFCON-DOMAIN-BLOCK-$d" -Direction Outbound -Action Block -RemoteAddress $ip -Profile Any -Protocol Any
-    Write-Host "  → BLOCKED FQDN IP: $ip ($d)" -ForegroundColor Red
+  try {
+    Write-Host "→ RESOLVING: $d" -ForegroundColor Red
+    $ips = (Resolve-DnsName $d -ErrorAction Stop).IPAddress
+    foreach ($ip in $ips) {
+      New-NetFirewallRule -DisplayName "DEFCON-DOMAIN-BLOCK-$d-$ip" -Direction Outbound -Action Block -RemoteAddress $ip -Profile Any -Protocol Any
+      Write-Host "  → BLOCKED FQDN IP: $ip ($d)" -ForegroundColor Red
+    }
+  } catch {
+    Write-Host "  × DNS RESOLUTION FAILED FOR: $d" -ForegroundColor DarkGray
   }
 }
 
+# =====================[ PHASE 3 — SERVICE TERMINATION ]========================
 Write-Host "[PHASE 3] TELEMETRY SERVICE TERMINATION INITIATED..." -ForegroundColor Red
-$svcList = @("DiagTrack","dmwappushservice","WerSvc","PcaSvc","WbioSrvc","MicrosoftEdgeUpdate",
-"MapsBroker","RetailDemo","OneSyncSvc","BthAvctpSvc","Fax","lfsvc","AppVClient","MessagingService")
+$svcList = @(
+  "DiagTrack","dmwappushservice","WerSvc","PcaSvc","WbioSrvc","MicrosoftEdgeUpdate",
+  "MapsBroker","RetailDemo","OneSyncSvc","BthAvctpSvc","Fax","lfsvc","AppVClient","MessagingService"
+)
 foreach ($svc in $svcList) {
-  Stop-Service -Name $svc -Force
-  Set-Service -Name $svc -StartupType Disabled
-  Write-Host "→ TERMINATED SERVICE: $svc" -ForegroundColor Red
+  try {
+    Stop-Service -Name $svc -Force -ErrorAction Stop
+    Set-Service -Name $svc -StartupType Disabled
+    Write-Host "→ TERMINATED SERVICE: $svc" -ForegroundColor Red
+  } catch {
+    Write-Host "× COULD NOT TERMINATE: $svc (May not exist)" -ForegroundColor DarkGray
+  }
 }
 
+# =====================[ PHASE 4 — LOOPBACK + EXFIL PORTS ]=====================
 Write-Host "[PHASE 4] LOOPBACK AND PORT EXFIL NULLIFICATION..." -ForegroundColor Red
 New-NetFirewallRule -DisplayName "DEFCON-LOOPBACK-KILL-V4" -Direction Outbound -Action Block -RemoteAddress "127.0.0.1" -Protocol TCP -Profile Any
 Write-Host "→ BLOCKED LOOPBACK: 127.0.0.1" -ForegroundColor Red
+
 New-NetFirewallRule -DisplayName "DEFCON-EXFIL-PORTS" -Direction Outbound -Action Block -Protocol TCP -LocalPort 4444,5555,6666,8080,1337 -Profile Any
 Write-Host "→ BLOCKED EXFIL PORTS: 4444,5555,6666,8080,1337" -ForegroundColor Red
 
+# =====================[ PHASE 5 — NULLROUTE DEPLOYMENT ]=======================
 Write-Host "[PHASE 5] NULLROUTE PERMA-KILL OF C2 BACKBONES..." -ForegroundColor Red
 $nullRoutes = @("52.114.207.64","199.232.37.91","20.42.65.59")
 foreach ($ip in $nullRoutes) {
@@ -82,4 +99,5 @@ foreach ($ip in $nullRoutes) {
   Write-Host "→ NULLROUTE ADDED: $ip" -ForegroundColor Red
 }
 
+# =====================[ COMPLETE ]=============================================
 Write-Host "🛑 EOL LUMMASTEALER TERMINATION COMPLETE — HOSTFILE + FIREWALL + TELEMETRY + EXFIL DEAD" -ForegroundColor Red
