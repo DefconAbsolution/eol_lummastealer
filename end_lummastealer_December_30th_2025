@@ -7,9 +7,8 @@ $blockDomains = @(
   "telemetry.microsoft.com", "vortex.data.microsoft.com", "settings-win.data.microsoft.com",
   "oca.telemetry.microsoft.com", "telecommand.telemetry.microsoft.com", "watson.telemetry.microsoft.com",
   "telemetry.remoteapp.windowsazure.com", "vortex-win.data.microsoft.com", "experiments.microsoftazuread-sso.com",
-  "teams.microsoft.com", "msteams.azureedge.net", "client.wns.windows.com", "g.live.com",
-  "wns.windows.com", "msedge.net", "edge.microsoft.com", "az416426.vo.msecnd.net",
-  "mobile.pipe.aria.microsoft.com"
+  "client.wns.windows.com", "g.live.com", "wns.windows.com",
+  "az416426.vo.msecnd.net", "mobile.pipe.aria.microsoft.com"
 )
 
 Write-Host "[PHASE 0] HOSTFILE NULLIFICATION COMMENCED..." -ForegroundColor Red
@@ -53,7 +52,7 @@ foreach ($ip in $l_ipv6) {
 
 # =====================[ PHASE 2 — DOMAIN RESOLVE + BLOCK ]====================
 Write-Host "[PHASE 2] DOMAIN TO IP RESOLUTION + FIREWALL BLOCKING..." -ForegroundColor Red
-$domains = @("teams.microsoft.com","telemetry.microsoft.com","azureedge.net","msedge.net","windows.net")
+$domains = @("telemetry.microsoft.com","windows.net")
 foreach ($d in $domains) {
   try {
     Write-Host "→ RESOLVING: $d" -ForegroundColor Red
